@@ -42,7 +42,7 @@
             </v-menu>
             <v-spacer></v-spacer>
 
-            <v-btn text class="success mx-0 mt-3" @click="submit">Add project</v-btn>
+            <v-btn text class="success mx-0 mt-3" @click="submit" :loading="loading">Add project</v-btn>
           </v-form>
         </v-card-text>
       </v-card>
@@ -52,6 +52,8 @@
 
 <script>
 import moment from "moment";
+import db from "@/fb";
+import { log } from "util";
 
 export default {
   data() {
@@ -62,19 +64,36 @@ export default {
       title: "",
       content: "",
       inputRules: [v => v.length >= 3 || "Minimum length is 3 characters"],
-      dateRules: [v => !!v || "Due date is required"]
+      dateRules: [v => !!v || "Due date is required"],
+      loading: false
     };
   },
   methods: {
     submit() {
-      if(this.$refs.form.validate()){
-        console.log(`TITLE: ${this.title}\nCONTENT: ${this.content}\nDUE DATE: ${this.computedDateFormattedMomentjs}`);
-      } 
+      if (this.$refs.form.validate()) {
+        this.loading = true;
+
+        const project = {
+          title: this.title,
+          content: this.content,
+          due: moment(this.date).format("Do MMM YYYY"),
+          person: "The Net Ninja",
+          status: "ongoing"
+        };
+
+        db.collection("projects")
+          .add(project)
+          .then(() => {
+            this.loading = false;
+            this.dialog = false;
+            this.$emit("projectAdded")
+          });
+      }
     }
   },
   computed: {
     computedDateFormattedMomentjs() {
-      return this.date ? moment(this.date).format("dddd, MMMM Do YYYY") : null;
+      return this.date ? moment(this.date).format("Do MMM YYYY") : null;
     }
   }
 };
